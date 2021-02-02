@@ -1,11 +1,11 @@
 <div class="form-container">
 
-    <form #noteForm="ngForm">
+    <form #noteForm="ngForm" (ngSubmit)="onSubmit(noteForm)">
 
         <div class="field">
             <label class="label">Title</label>
             <div class="control">
-                <input type="text" class="input">
+                <input type="text" name="title" [ngModel]="note.title" required class="input">
             </div>
         </div>
 
@@ -14,16 +14,16 @@
         <div class="field">
             <label class="label">Body</label>
             <div class="control">
-                <textarea class="textarea"></textarea>
+                <textarea class="textarea" name="body" [ngModel]="note.body"></textarea>
             </div>
         </div>
 
         <div class="field is-grouped is-pulled-right">
             <div class="control">
-                <div class="button is-text" type="button">Cancel</div>
+                <div class="button is-text" type="button" (click)="cancel()">Cancel</div>
             </div>
             <div class="control">
-                <div class="button is-success" type="submit">Save</div>
+                <button class="button is-success" type="submit" [disabled]="!noteForm.valid">Save</button>
             </div>
         </div>
 
