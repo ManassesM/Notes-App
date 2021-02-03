@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Note } from '../shared/node.model';
 import { NotesService } from '../shared/notes.service';
 import { animate, style, transition, trigger, query, stagger } from '@angular/animations';
@@ -85,16 +85,25 @@ export class NotesListComponent implements OnInit {
   notes: Note[] = new Array<Note>();
   filteredNotes: Note[] = new Array<Note>();
 
+  @ViewChild('filterInput') filterInputElRef: ElementRef<HTMLInputElement>;
+
   constructor(private notesService: NotesService) { }
 
   ngOnInit(): void {
     // We want to retrieve all notes from the NotesService
     this.notes = this.notesService.getAll();
-    this.filteredNotes = this.notes;
+    this.filter('');
   }
 
-  deleteNote(id: number) {
-    this.notesService.delete(id);
+  deleteNote(note: Note) {
+    let noteId = this.notesService.getId(note);
+    this.notesService.delete(noteId);
+    this.filter(this.filterInputElRef.nativeElement.value);
+  }
+
+  generateNoteURL(note: Note) {
+    let noteId = this.notesService.getId(note);
+    return noteId;
   }
 
   filter(query: string) {
@@ -118,6 +127,9 @@ export class NotesListComponent implements OnInit {
     // so we first must remove the diplicates ones
     let uniqueResults = this.removeDuplicates(allResults);
     this.filteredNotes = uniqueResults;
+
+    // now sort by relevancy
+    this.sortByRelevancy(allResults);
   }
 
   removeDuplicates(arr: Array<any>): Array<any> {
@@ -142,5 +154,32 @@ export class NotesListComponent implements OnInit {
     })
 
     return relevantNotes;
+  }
+
+  sortByRelevancy(searchResults: Note[]) {
+    // The method will calculate the relevancy of a note based on the number of times it appears in
+    // the search results
+
+    let noteCountObj: Object = {}; // format - key:Value => NoteId:number (note object id : count)
+
+    searchResults.forEach(note => {
+      let noteId = this.notesService.getId(note); // get the note id
+
+      if (noteCountObj[noteId]) {
+        noteCountObj[noteId] += 1;
+      } else {
+        noteCountObj[noteId] = 1;
+      }
+    })
+
+    this.filteredNotes = this.filteredNotes.sort((a: Note, b: Note) => {
+      let aId = this.notesService.getId(a);
+      let bId = this.notesService.getId(b);
+
+      let aCount = noteCountObj[aId];
+      let bCount = noteCountObj[bId];
+
+      return bCount - aCount;
+    })
   }
 }
